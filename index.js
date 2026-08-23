@@ -3,13 +3,15 @@ import 'dotenv/config';
 import {
   Client,
   GatewayIntentBits,
-  Partials,
   REST,
   Routes,
   SlashCommandBuilder,
   ChannelType,
   PermissionFlagsBits,
-  AttachmentBuilder
+  AttachmentBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle
 } from 'discord.js';
 
 import fs from 'node:fs';
@@ -32,14 +34,7 @@ if (!TOKEN || !CLIENT_ID || !GUILD_ID) {
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.GuildMessageReactions
-  ],
-
-  partials: [
-    Partials.Message,
-    Partials.Channel,
-    Partials.Reaction
+    GatewayIntentBits.GuildMessages
   ]
 });
 
@@ -52,7 +47,6 @@ const rest = new REST({
 ========================================================= */
 
 const commands = [
-
   new SlashCommandBuilder()
     .setName('setup404')
     .setDescription('Monta/atualiza a estrutura oficial do 404')
@@ -62,11 +56,10 @@ const commands = [
 
   new SlashCommandBuilder()
     .setName('painel404')
-    .setDescription('Republica Welcome e seleção de cargos')
+    .setDescription('Republica Welcome e painel de cargos')
     .setDefaultMemberPermissions(
       PermissionFlagsBits.Administrator
     )
-
 ];
 
 /* =========================================================
@@ -74,7 +67,6 @@ const commands = [
 ========================================================= */
 
 const roleDefs = [
-
   ['━━━「 404 STAFF 」━━━', 0x2b2d31],
   ['👑・404 // FOUNDER', 0x8e44ad],
   ['🛡️・404 // ADMIN', 0x71368a],
@@ -101,15 +93,13 @@ const roleDefs = [
 
   ['━━━「 SYSTEM 」━━━', 0x2b2d31],
   ['🤖・BOTS', 0x5865f2]
-
 ];
 
 /* =========================================================
-   CATEGORIAS
+   CATEGORIAS / CANAIS
 ========================================================= */
 
 const categories = [
-
   [
     '👾・START HERE',
     [
@@ -175,32 +165,11 @@ const categories = [
       ['📋・logs', 'text']
     ]
   ]
-
 ];
 
 /* =========================================================
-   REAÇÕES -> CARGOS
+   GRUPOS DE CARGO
 ========================================================= */
-
-const reactionRoles = {
-
-  // INPUT
-  '🎮': '🎮・CONTROLE',
-  '⌨️': '⌨️・MOUSE & KEYBOARD',
-
-  // PLATAFORMA
-  '🖥️': '🖥️・PC',
-  '🟦': '🟦・PLAYSTATION',
-  '🟩': '🟩・XBOX',
-  '☁️': '☁️・GEFORCE NOW',
-
-  // GAME MODES
-  '🪂': '🪂・WARZONE',
-  '🏆': '🏆・RANKED',
-  '💥': '💥・MULTIPLAYER',
-  '🧟': '🧟・ZOMBIES'
-
-};
 
 const inputRoles = [
   '🎮・CONTROLE',
@@ -214,35 +183,111 @@ const platformRoles = [
   '☁️・GEFORCE NOW'
 ];
 
-const roleToEmoji = {};
+const gameModeRoles = [
+  '🪂・WARZONE',
+  '🏆・RANKED',
+  '💥・MULTIPLAYER',
+  '🧟・ZOMBIES'
+];
 
-for (const [emoji, roleName] of Object.entries(reactionRoles)) {
-  roleToEmoji[roleName] = emoji;
+/* =========================================================
+   BOTÕES
+========================================================= */
+
+const buttonRoleMap = {
+  input_controle: '🎮・CONTROLE',
+  input_mnk: '⌨️・MOUSE & KEYBOARD',
+
+  platform_pc: '🖥️・PC',
+  platform_ps: '🟦・PLAYSTATION',
+  platform_xbox: '🟩・XBOX',
+  platform_gfn: '☁️・GEFORCE NOW',
+
+  mode_warzone: '🪂・WARZONE',
+  mode_ranked: '🏆・RANKED',
+  mode_multi: '💥・MULTIPLAYER',
+  mode_zombies: '🧟・ZOMBIES'
+};
+
+function criarBotoesCargos() {
+  const row1 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('input_controle')
+      .setLabel('Controle')
+      .setEmoji('🎮')
+      .setStyle(ButtonStyle.Secondary),
+
+    new ButtonBuilder()
+      .setCustomId('input_mnk')
+      .setLabel('Mouse & Keyboard')
+      .setEmoji('⌨️')
+      .setStyle(ButtonStyle.Secondary)
+  );
+
+  const row2 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('platform_pc')
+      .setLabel('PC')
+      .setEmoji('🖥️')
+      .setStyle(ButtonStyle.Secondary),
+
+    new ButtonBuilder()
+      .setCustomId('platform_ps')
+      .setLabel('PlayStation')
+      .setEmoji('🟦')
+      .setStyle(ButtonStyle.Secondary),
+
+    new ButtonBuilder()
+      .setCustomId('platform_xbox')
+      .setLabel('Xbox')
+      .setEmoji('🟩')
+      .setStyle(ButtonStyle.Secondary),
+
+    new ButtonBuilder()
+      .setCustomId('platform_gfn')
+      .setLabel('GeForce NOW')
+      .setEmoji('☁️')
+      .setStyle(ButtonStyle.Secondary)
+  );
+
+  const row3 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('mode_warzone')
+      .setLabel('Warzone')
+      .setEmoji('🪂')
+      .setStyle(ButtonStyle.Secondary),
+
+    new ButtonBuilder()
+      .setCustomId('mode_ranked')
+      .setLabel('Ranked')
+      .setEmoji('🏆')
+      .setStyle(ButtonStyle.Secondary),
+
+    new ButtonBuilder()
+      .setCustomId('mode_multi')
+      .setLabel('Multiplayer')
+      .setEmoji('💥')
+      .setStyle(ButtonStyle.Secondary),
+
+    new ButtonBuilder()
+      .setCustomId('mode_zombies')
+      .setLabel('Zombies')
+      .setEmoji('🧟')
+      .setStyle(ButtonStyle.Secondary)
+  );
+
+  return [row1, row2, row3];
 }
 
 /* =========================================================
    CANAIS ESPECIAIS
 ========================================================= */
 
-/*
-  Nesses canais:
-  Slash commands funcionam normalmente.
-  Mensagem comum de membro é apagada.
-
-  Também deixei mensagens começando com !
-  porque alguns bots de COD ainda usam prefixo.
-*/
-
 const commandOnlyChannels = [
   '🔫・loadouts',
   '🏆・ranked',
   '📊・stats'
 ];
-
-/*
-  Aqui membros não conversam.
-  Bots podem publicar e Staff também.
-*/
 
 const botPublicationChannels = [
   '📰・updates'
@@ -253,37 +298,31 @@ const botPublicationChannels = [
 ========================================================= */
 
 function isStaff(member) {
-
   if (!member) return false;
 
   return (
     member.permissions.has(
       PermissionFlagsBits.Administrator
     ) ||
-
     member.roles.cache.some(
       role =>
         role.name === '👑・404 // FOUNDER' ||
         role.name === '🛡️・404 // ADMIN'
     )
   );
-
 }
 
 async function ensureRole(guild, name, color) {
-
   let found = guild.roles.cache.find(
     r => r.name === name
   );
 
   if (!found) {
-
     found = await guild.roles.create({
       name,
       color,
       reason: '404 Setup'
     });
-
   }
 
   return found;
@@ -295,7 +334,6 @@ async function ensureChannel(
   type,
   parent
 ) {
-
   let found = guild.channels.cache.find(
     c =>
       c.name === name &&
@@ -303,22 +341,15 @@ async function ensureChannel(
   );
 
   if (!found) {
-
     found = await guild.channels.create({
-
       name,
-
       type:
         type === 'voice'
           ? ChannelType.GuildVoice
           : ChannelType.GuildText,
-
       parent: parent?.id,
-
       reason: '404 Setup'
-
     });
-
   }
 
   return found;
@@ -328,13 +359,11 @@ async function ensureChannel(
    PERMISSÕES
 ========================================================= */
 
-async function configurarPermissoes(guild, roles) {
-
+async function configurarPermissoes(
+  guild,
+  roles
+) {
   const everyone = guild.roles.everyone;
-
-  /*
-    START HERE
-  */
 
   const welcome = guild.channels.cache.find(
     c => c.name === '📡・bem-vindo'
@@ -348,13 +377,7 @@ async function configurarPermissoes(guild, roles) {
     c => c.name === '📢・avisos'
   );
 
-  /*
-    BEM-VINDO
-    membro apenas lê
-  */
-
   if (welcome) {
-
     await welcome.permissionOverwrites.edit(
       everyone,
       {
@@ -363,35 +386,21 @@ async function configurarPermissoes(guild, roles) {
         AddReactions: false
       }
     );
-
   }
 
-  /*
-    CARGOS
-    membro não escreve,
-    mas pode reagir
-  */
-
   if (cargos) {
-
     await cargos.permissionOverwrites.edit(
       everyone,
       {
         ViewChannel: true,
         SendMessages: false,
-        AddReactions: true,
+        AddReactions: false,
         ReadMessageHistory: true
       }
     );
-
   }
 
-  /*
-    AVISOS
-  */
-
   if (avisos) {
-
     await avisos.permissionOverwrites.edit(
       everyone,
       {
@@ -399,49 +408,37 @@ async function configurarPermissoes(guild, roles) {
         SendMessages: false
       }
     );
-
   }
-
-  /*
-    STAFF pode escrever nos 3
-  */
 
   for (const channel of [
     welcome,
     cargos,
     avisos
   ]) {
-
     if (!channel) continue;
 
     await channel.permissionOverwrites.edit(
       roles['👑・404 // FOUNDER'],
       {
-        SendMessages: true,
-        AddReactions: true
+        SendMessages: true
       }
     );
 
     await channel.permissionOverwrites.edit(
       roles['🛡️・404 // ADMIN'],
       {
-        SendMessages: true,
-        AddReactions: true
+        SendMessages: true
       }
     );
-
   }
-
 }
 
 /* =========================================================
-   LIMPAR MENSAGENS ANTIGAS DO NOSSO BOT
+   LIMPAR MENSAGENS ANTIGAS DO BOT
 ========================================================= */
 
 async function limparMensagensBot(channel) {
-
   try {
-
     const messages =
       await channel.messages.fetch({
         limit: 50
@@ -455,29 +452,22 @@ async function limparMensagensBot(channel) {
       );
 
     for (const message of botMessages.values()) {
-
       await message.delete()
         .catch(() => {});
-
     }
-
   } catch (error) {
-
     console.error(
       `Erro limpando ${channel.name}`,
       error
     );
-
   }
-
 }
 
 /* =========================================================
-   IMAGEM WELCOME
+   WELCOME
 ========================================================= */
 
 async function publicarWelcome(guild) {
-
   const channel =
     guild.channels.cache.find(
       c => c.name === '📡・bem-vindo'
@@ -497,11 +487,9 @@ async function publicarWelcome(guild) {
     );
 
   if (!fs.existsSync(imagePath)) {
-
     throw new Error(
       'assets/welcome.png não encontrado.'
     );
-
   }
 
   await limparMensagensBot(channel);
@@ -517,15 +505,13 @@ async function publicarWelcome(guild) {
   await channel.send({
     files: [image]
   });
-
 }
 
 /* =========================================================
-   IMAGEM / CARGOS
+   PAINEL DE CARGOS
 ========================================================= */
 
 async function publicarCargos(guild) {
-
   const channel =
     guild.channels.cache.find(
       c => c.name === '🎭・cargos'
@@ -545,11 +531,9 @@ async function publicarCargos(guild) {
     );
 
   if (!fs.existsSync(imagePath)) {
-
     throw new Error(
       'assets/cargos.png não encontrado.'
     );
-
   }
 
   await limparMensagensBot(channel);
@@ -562,47 +546,19 @@ async function publicarCargos(guild) {
       }
     );
 
-  const message =
-    await channel.send({
-      files: [image]
-    });
-
-  /*
-    Ordem das reações
-  */
-
-  const emojis = [
-    '🎮',
-    '⌨️',
-
-    '🖥️',
-    '🟦',
-    '🟩',
-    '☁️',
-
-    '🪂',
-    '🏆',
-    '💥',
-    '🧟'
-  ];
-
-  for (const emoji of emojis) {
-
-    await message.react(emoji);
-
-  }
-
+  await channel.send({
+    files: [image],
+    components: criarBotoesCargos()
+  });
 }
 
 /* =========================================================
-   PUBLICAR OS DOIS PAINÉIS
+   PUBLICAR PAINÉIS
 ========================================================= */
 
 async function publicarPaineis(guild) {
-
   await publicarWelcome(guild);
   await publicarCargos(guild);
-
 }
 
 /* =========================================================
@@ -610,33 +566,21 @@ async function publicarPaineis(guild) {
 ========================================================= */
 
 async function setup(guild) {
-
-  /*
-    CARGOS
-  */
-
   const roles = {};
 
   for (const [name, color] of roleDefs) {
-
     roles[name] =
       await ensureRole(
         guild,
         name,
         color
       );
-
   }
-
-  /*
-    CATEGORIAS
-  */
 
   for (
     const [categoryName, children]
     of categories
   ) {
-
     let category =
       guild.channels.cache.find(
         c =>
@@ -645,110 +589,74 @@ async function setup(guild) {
           ChannelType.GuildCategory
       );
 
-    /*
-      BUNKER
-    */
-
     let permissionOverwrites = [];
 
     if (
       categoryName ===
       '🔒・404 // BUNKER'
     ) {
-
       permissionOverwrites = [
-
         {
           id:
             guild.roles.everyone.id,
-
           deny: [
             PermissionFlagsBits.ViewChannel
           ]
         },
-
         {
           id:
             roles['⚡・404'].id,
-
           allow: [
             PermissionFlagsBits.ViewChannel
           ]
         }
-
       ];
-
     }
-
-    /*
-      STAFF
-    */
 
     if (
       categoryName ===
       '🛡️・STAFF'
     ) {
-
       permissionOverwrites = [
-
         {
           id:
             guild.roles.everyone.id,
-
           deny: [
             PermissionFlagsBits.ViewChannel
           ]
         },
-
         {
           id:
             roles[
               '👑・404 // FOUNDER'
             ].id,
-
           allow: [
             PermissionFlagsBits.ViewChannel
           ]
         },
-
         {
           id:
             roles[
               '🛡️・404 // ADMIN'
             ].id,
-
           allow: [
             PermissionFlagsBits.ViewChannel
           ]
         }
-
       ];
-
     }
 
     if (!category) {
-
       category =
         await guild.channels.create({
-
           name: categoryName,
-
           type:
             ChannelType.GuildCategory,
-
           permissionOverwrites,
-
           reason:
             '404 Setup'
-
         });
-
     }
-
-    /*
-      Atualiza permissões se
-      categoria já existia
-    */
 
     if (
       categoryName ===
@@ -756,425 +664,175 @@ async function setup(guild) {
       categoryName ===
         '🛡️・STAFF'
     ) {
-
       await category.edit({
         permissionOverwrites
       });
-
     }
-
-    /*
-      CANAIS
-    */
 
     for (
       const [name, type]
       of children
     ) {
-
       await ensureChannel(
         guild,
         name,
         type,
         category
       );
-
     }
-
   }
-
-  /*
-    PERMISSÕES START HERE
-  */
 
   await configurarPermissoes(
     guild,
     roles
   );
 
-  /*
-    PAINÉIS
-  */
-
   await publicarPaineis(guild);
 
   return roles;
-
 }
 
 /* =========================================================
-   REMOVER REAÇÃO ANTIGA
-   INPUT / PLATAFORMA
+   BOTÃO DE CARGO
 ========================================================= */
 
-async function removerReacaoAnterior(
-  message,
-  user,
-  roleName
+async function processarBotaoCargo(
+  interaction
 ) {
-
-  let group = null;
-
-  if (inputRoles.includes(roleName)) {
-    group = inputRoles;
-  }
-
-  if (platformRoles.includes(roleName)) {
-    group = platformRoles;
-  }
-
-  if (!group) return;
-
-  for (const otherRole of group) {
-
-    if (otherRole === roleName) {
-      continue;
-    }
-
-    const oldEmoji =
-      roleToEmoji[otherRole];
-
-    if (!oldEmoji) continue;
-
-    const reaction =
-      message.reactions.cache.find(
-        r =>
-          r.emoji.name ===
-          oldEmoji
-      );
-
-    if (!reaction) continue;
-
-    /*
-      Remove somente a reação
-      daquele usuário.
-    */
-
-    await reaction.users
-      .remove(user.id)
-      .catch(() => {});
-
-  }
-
-}
-
-/* =========================================================
-   ADICIONAR CARGO
-========================================================= */
-
-async function aplicarCargo(
-  reaction,
-  user
-) {
-
-  if (user.bot) return;
-
-  if (reaction.partial) {
-
-    try {
-      await reaction.fetch();
-    } catch {
-      return;
-    }
-
-  }
-
-  const message =
-    reaction.message;
-
-  if (
-    message.channel.name !==
-    '🎭・cargos'
-  ) {
-    return;
-  }
-
-  if (
-    message.author?.id !==
-    client.user.id
-  ) {
-    return;
-  }
-
-  const emoji =
-    reaction.emoji.name;
-
   const roleName =
-    reactionRoles[emoji];
+    buttonRoleMap[
+      interaction.customId
+    ];
 
   if (!roleName) return;
 
   const guild =
-    message.guild;
-
-  if (!guild) return;
+    interaction.guild;
 
   const member =
-    await guild.members
-      .fetch(user.id)
-      .catch(() => null);
-
-  if (!member) return;
+    await guild.members.fetch(
+      interaction.user.id
+    );
 
   const selectedRole =
     guild.roles.cache.find(
-      r => r.name === roleName
+      role =>
+        role.name === roleName
     );
 
-  if (!selectedRole) return;
-
-  /*
-    INPUT EXCLUSIVO
-  */
-
-  if (
-    inputRoles.includes(roleName)
-  ) {
-
-    for (
-      const oldRoleName
-      of inputRoles
-    ) {
-
-      if (
-        oldRoleName === roleName
-      ) {
-        continue;
-      }
-
-      const oldRole =
-        guild.roles.cache.find(
-          r =>
-            r.name ===
-            oldRoleName
-        );
-
-      if (
-        oldRole &&
-        member.roles.cache.has(
-          oldRole.id
-        )
-      ) {
-
-        await member.roles.remove(
-          oldRole
-        );
-
-      }
-
-    }
-
-    await removerReacaoAnterior(
-      message,
-      user,
-      roleName
-    );
-
+  if (!selectedRole) {
+    return interaction.reply({
+      content:
+        '❌ Cargo não encontrado.',
+      ephemeral: true
+    });
   }
 
   /*
-    PLATAFORMA EXCLUSIVA
+    Se já tem:
+    remove o cargo.
   */
-
-  if (
-    platformRoles.includes(roleName)
-  ) {
-
-    for (
-      const oldRoleName
-      of platformRoles
-    ) {
-
-      if (
-        oldRoleName === roleName
-      ) {
-        continue;
-      }
-
-      const oldRole =
-        guild.roles.cache.find(
-          r =>
-            r.name ===
-            oldRoleName
-        );
-
-      if (
-        oldRole &&
-        member.roles.cache.has(
-          oldRole.id
-        )
-      ) {
-
-        await member.roles.remove(
-          oldRole
-        );
-
-      }
-
-    }
-
-    await removerReacaoAnterior(
-      message,
-      user,
-      roleName
-    );
-
-  }
-
-  /*
-    ADICIONA
-  */
-
-  if (
-    !member.roles.cache.has(
-      selectedRole.id
-    )
-  ) {
-
-    await member.roles.add(
-      selectedRole
-    );
-
-    console.log(
-      `${user.tag} recebeu ${roleName}`
-    );
-
-  }
-
-}
-
-/* =========================================================
-   REMOVER CARGO
-========================================================= */
-
-async function removerCargo(
-  reaction,
-  user
-) {
-
-  if (user.bot) return;
-
-  if (reaction.partial) {
-
-    try {
-      await reaction.fetch();
-    } catch {
-      return;
-    }
-
-  }
-
-  const message =
-    reaction.message;
-
-  if (
-    message.channel.name !==
-    '🎭・cargos'
-  ) {
-    return;
-  }
-
-  if (
-    message.author?.id !==
-    client.user.id
-  ) {
-    return;
-  }
-
-  const emoji =
-    reaction.emoji.name;
-
-  const roleName =
-    reactionRoles[emoji];
-
-  if (!roleName) return;
-
-  const guild =
-    message.guild;
-
-  if (!guild) return;
-
-  const member =
-    await guild.members
-      .fetch(user.id)
-      .catch(() => null);
-
-  if (!member) return;
-
-  const selectedRole =
-    guild.roles.cache.find(
-      r => r.name === roleName
-    );
-
-  if (!selectedRole) return;
 
   if (
     member.roles.cache.has(
       selectedRole.id
     )
   ) {
-
     await member.roles.remove(
       selectedRole
     );
 
-    console.log(
-      `${user.tag} removeu ${roleName}`
-    );
-
+    return interaction.reply({
+      content:
+        `➖ Cargo **${roleName}** removido.`,
+      ephemeral: true
+    });
   }
 
+  /*
+    INPUT exclusivo
+  */
+
+  if (
+    inputRoles.includes(roleName)
+  ) {
+    for (
+      const otherName
+      of inputRoles
+    ) {
+      if (
+        otherName === roleName
+      ) continue;
+
+      const otherRole =
+        guild.roles.cache.find(
+          role =>
+            role.name ===
+            otherName
+        );
+
+      if (
+        otherRole &&
+        member.roles.cache.has(
+          otherRole.id
+        )
+      ) {
+        await member.roles.remove(
+          otherRole
+        );
+      }
+    }
+  }
+
+  /*
+    PLATAFORMA exclusiva
+  */
+
+  if (
+    platformRoles.includes(roleName)
+  ) {
+    for (
+      const otherName
+      of platformRoles
+    ) {
+      if (
+        otherName === roleName
+      ) continue;
+
+      const otherRole =
+        guild.roles.cache.find(
+          role =>
+            role.name ===
+            otherName
+        );
+
+      if (
+        otherRole &&
+        member.roles.cache.has(
+          otherRole.id
+        )
+      ) {
+        await member.roles.remove(
+          otherRole
+        );
+      }
+    }
+  }
+
+  /*
+    GAME MODE pode ter vários.
+  */
+
+  await member.roles.add(
+    selectedRole
+  );
+
+  return interaction.reply({
+    content:
+      `✅ Cargo **${roleName}** adicionado.`,
+    ephemeral: true
+  });
 }
-
-/* =========================================================
-   REAÇÕES
-========================================================= */
-
-client.on(
-  'messageReactionAdd',
-  async (reaction, user) => {
-
-    try {
-
-      await aplicarCargo(
-        reaction,
-        user
-      );
-
-    } catch (error) {
-
-      console.error(
-        'Erro adicionando cargo:',
-        error
-      );
-
-    }
-
-  }
-);
-
-client.on(
-  'messageReactionRemove',
-  async (reaction, user) => {
-
-    try {
-
-      await removerCargo(
-        reaction,
-        user
-      );
-
-    } catch (error) {
-
-      console.error(
-        'Erro removendo cargo:',
-        error
-      );
-
-    }
-
-  }
-);
 
 /* =========================================================
    CANAIS SOMENTE COMANDOS
@@ -1183,18 +841,15 @@ client.on(
 client.on(
   'messageCreate',
   async message => {
-
     if (!message.guild) return;
 
     if (
       message.guild.id !==
       GUILD_ID
-    ) {
-      return;
-    }
+    ) return;
 
     /*
-      Bots podem responder/publicar.
+      Bots sempre podem responder.
     */
 
     if (message.author.bot) {
@@ -1202,7 +857,7 @@ client.on(
     }
 
     /*
-      Staff pode escrever.
+      Staff pode conversar.
     */
 
     if (
@@ -1214,12 +869,10 @@ client.on(
     /*
       LOADOUT / STATS / RANKED
 
-      Slash commands não aparecem
-      como mensagem comum.
+      Slash commands não geram
+      mensagem normal do usuário.
 
-      Também permitimos !comando
-      para compatibilidade com bots
-      de prefixo.
+      Texto comum é apagado.
     */
 
     if (
@@ -1227,28 +880,15 @@ client.on(
         message.channel.name
       )
     ) {
-
-      if (
-        message.content
-          ?.trim()
-          .startsWith('!')
-      ) {
-
-        return;
-
-      }
-
       await message.delete()
         .catch(() => {});
 
       return;
-
     }
 
     /*
       UPDATES
-
-      apenas bots e staff.
+      só bots + staff
     */
 
     if (
@@ -1256,14 +896,11 @@ client.on(
         message.channel.name
       )
     ) {
-
       await message.delete()
         .catch(() => {});
 
       return;
-
     }
-
   }
 );
 
@@ -1274,20 +911,16 @@ client.on(
 client.once(
   'ready',
   async () => {
-
     console.log(
       `✅ 404 bot online como ${client.user.tag}`
     );
 
     try {
-
       await rest.put(
-
         Routes.applicationGuildCommands(
           CLIENT_ID,
           GUILD_ID
         ),
-
         {
           body:
             commands.map(
@@ -1295,57 +928,80 @@ client.once(
                 command.toJSON()
             )
         }
-
       );
 
       console.log(
         '✅ /setup404 e /painel404 registrados.'
       );
-
     } catch (error) {
-
       console.error(
         'Erro registrando comandos:',
         error
       );
-
     }
-
   }
 );
 
 /* =========================================================
-   SLASH COMMANDS
+   INTERAÇÕES
 ========================================================= */
 
 client.on(
   'interactionCreate',
   async interaction => {
+    /*
+      BOTÕES DE CARGO
+    */
+
+    if (
+      interaction.isButton()
+    ) {
+      try {
+        await processarBotaoCargo(
+          interaction
+        );
+      } catch (error) {
+        console.error(
+          'Erro no botão:',
+          error
+        );
+
+        if (
+          !interaction.replied &&
+          !interaction.deferred
+        ) {
+          await interaction.reply({
+            content:
+              '❌ Não consegui alterar seu cargo.',
+            ephemeral: true
+          }).catch(() => {});
+        }
+      }
+
+      return;
+    }
+
+    /*
+      SLASH COMMANDS
+    */
 
     if (
       !interaction.isChatInputCommand()
-    ) {
-      return;
-    }
+    ) return;
 
     if (
       interaction.guildId !==
       GUILD_ID
     ) {
-
       return interaction.reply({
-
         content:
           'Este bot está limitado ao servidor 404.',
-
         ephemeral: true
-
       });
-
     }
 
     /*
-      PROTEÇÃO EXTRA
+      Proteção extra
     */
 
     if (
@@ -1354,16 +1010,11 @@ client.on(
           PermissionFlagsBits.Administrator
         )
     ) {
-
       return interaction.reply({
-
         content:
           '❌ Apenas a administração do 404 pode usar esse comando.',
-
         ephemeral: true
-
       });
-
     }
 
     /*
@@ -1374,48 +1025,40 @@ client.on(
       interaction.commandName ===
       'setup404'
     ) {
-
       await interaction.deferReply({
         ephemeral: true
       });
 
       try {
-
         await setup(
           interaction.guild
         );
 
         await interaction.editReply(
-          '✅ **404 // NO SIGNAL** atualizado.\n\n📡 Welcome publicado\n🎭 Cargos configurados\n🔒 Permissões aplicadas\n⚡ Reações ativadas'
+          '✅ **404 // NO SIGNAL** atualizado.\n\n📡 Welcome publicado\n🎭 Painel com botões publicado\n🔒 Permissões aplicadas'
         );
-
       } catch (error) {
-
         console.error(error);
 
         await interaction.editReply(
           '❌ Erro no setup. Confira os logs do Railway e se existem `assets/welcome.png` e `assets/cargos.png`.'
         );
-
       }
-
     }
 
     /*
-      SOMENTE PAINÉIS
+      PAINEL
     */
 
     if (
       interaction.commandName ===
       'painel404'
     ) {
-
       await interaction.deferReply({
         ephemeral: true
       });
 
       try {
-
         await publicarPaineis(
           interaction.guild
         );
@@ -1423,19 +1066,14 @@ client.on(
         await interaction.editReply(
           '✅ Welcome e painel de cargos republicados.'
         );
-
       } catch (error) {
-
         console.error(error);
 
         await interaction.editReply(
           '❌ Erro publicando os painéis. Confira a pasta `assets`.'
         );
-
       }
-
     }
-
   }
 );
 
